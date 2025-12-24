@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Plus, Save, Trash2 } from "lucide-react";
-import { mockRoles, PERMISSIONS } from "@/lib/mock-data";
+import { PERMISSIONS } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Role,
+  STORE_KEYS,
+  getInitialRoles,
+  loadData,
+  saveData,
+} from "@/lib/jsonStore";
 
 const permissionCategories = [
   {
@@ -42,29 +48,15 @@ const permissionCategories = [
 
 export default function Permissions() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [editingPermissions, setEditingPermissions] = useState<string[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
 
-  const { data: roles = mockRoles } = useQuery({
-    queryKey: ["/api/admin/roles"],
-    queryFn: async () => {
-      return mockRoles;
-    },
-  });
-
-  const updateRolePermissionsMutation = useMutation({
-    mutationFn: async ({ roleId, permissions }: { roleId: string; permissions: string[] }) => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/roles"] });
-      toast({ title: "Permissions updated", description: "Role permissions have been updated." });
-      setSelectedRoleId(null);
-    },
-  });
+  useEffect(() => {
+    const loaded = loadData<Role[]>(STORE_KEYS.roles, getInitialRoles());
+    setRoles(loaded);
+  }, []);
 
   const handleRoleSelect = (roleId: string) => {
     setSelectedRoleId(roleId);
@@ -82,10 +74,18 @@ export default function Permissions() {
 
   const handleSave = () => {
     if (!selectedRoleId) return;
-    updateRolePermissionsMutation.mutate({
-      roleId: selectedRoleId,
-      permissions: editingPermissions,
+    const updated = roles.map((role) =>
+      role.id === selectedRoleId
+        ? { ...role, permissions: editingPermissions }
+        : role
+    );
+    setRoles(updated);
+    saveData(STORE_KEYS.roles, updated);
+    toast({
+      title: "Permissions updated",
+      description: "Role permissions have been updated.",
     });
+    setSelectedRoleId(null);
   };
 
   const selectedRole = roles.find(r => r.id === selectedRoleId);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,15 +13,23 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { IndianRupee, CheckCircle, XCircle, Clock } from "lucide-react";
-import { mockPayments } from "@/lib/mock-data";
+import {
+  Payment,
+  STORE_KEYS,
+  getInitialPayments,
+  loadData,
+} from "@/lib/jsonStore";
 
 export default function Payments() {
-  const { data: payments = mockPayments } = useQuery({
-    queryKey: ["/api/admin/payments"],
-    queryFn: async () => {
-      return mockPayments;
-    },
-  });
+  const [payments, setPayments] = useState<Payment[]>([]);
+
+  useEffect(() => {
+    const loaded = loadData<Payment[]>(
+      STORE_KEYS.payments,
+      getInitialPayments()
+    );
+    setPayments(loaded);
+  }, []);
 
   const formatAmount = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {

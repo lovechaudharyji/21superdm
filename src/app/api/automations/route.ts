@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { mockAutomations } from "@/lib/mock-data";
+import { loadData, STORE_KEYS, getInitialAutomations } from "@/lib/jsonStore";
 
 export async function GET() {
   await new Promise(resolve => setTimeout(resolve, 300));
-  return NextResponse.json(mockAutomations);
+  const automations = loadData(STORE_KEYS.automations, getInitialAutomations());
+  return NextResponse.json(automations);
 }
 
 export async function POST(request: Request) {

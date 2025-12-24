@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { mockPlans } from "@/lib/mock-data";
+import { loadData, STORE_KEYS, getInitialPlans } from "@/lib/jsonStore";
 
 export async function GET() {
   await new Promise(resolve => setTimeout(resolve, 200));
-  return NextResponse.json(mockPlans);
+  const plans = loadData(STORE_KEYS.plans, getInitialPlans());
+  return NextResponse.json(plans);
 }
 

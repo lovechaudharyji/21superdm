@@ -1,50 +1,98 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Users, Activity, ArrowUpRight, Server, IndianRupee } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import {
+  Automation,
+  Payment,
+  STORE_KEYS,
+  User,
+  getInitialAutomations,
+  getInitialPayments,
+  getInitialUsers,
+  loadData,
+} from "@/lib/jsonStore";
+import { useEffect, useMemo, useState } from "react";
 
 export default function AdminDashboard() {
-  const { data: stats } = useQuery({
-    queryKey: ["/api/admin/stats"],
-    queryFn: async () => {
-      // Mock data
-      return {
-        totalUsers: 1250,
-        activeUsers: 980,
-        totalAutomations: 3420,
-        totalRevenue: 245000,
-      };
-    },
-  });
+  const [users, setUsers] = useState<User[]>([]);
+  const [automations, setAutomations] = useState<Automation[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
-  const { data: activity = [] } = useQuery({
-    queryKey: ["/api/admin/activity"],
-    queryFn: async () => {
-      // Mock data
-      return [];
-    },
-  });
+  useEffect(() => {
+    setUsers(loadData<User[]>(STORE_KEYS.users, getInitialUsers()));
+    setAutomations(
+      loadData<Automation[]>(STORE_KEYS.automations, getInitialAutomations())
+    );
+    setPayments(
+      loadData<Payment[]>(STORE_KEYS.payments, getInitialPayments())
+    );
+  }, []);
 
-  const { data: analytics = [] } = useQuery({
-    queryKey: ["/api/admin/analytics", { days: 7 }],
-    queryFn: async () => {
-      // Mock data
-      return [
-        { date: new Date().toISOString(), count: 45 },
-        { date: new Date(Date.now() - 86400000).toISOString(), count: 52 },
-        { date: new Date(Date.now() - 172800000).toISOString(), count: 38 },
-      ];
-    },
-  });
+  const stats = useMemo(() => {
+    const totalUsers = users.length;
+    const activeUsers = users.filter((u) => u.status === "active").length;
+    const totalAutomations = automations.length;
+    const totalRevenue = payments
+      .filter((p) => p.status === "paid")
+      .reduce((sum, p) => sum + p.amount, 0);
 
-  const chartData = analytics.map(item => ({
-    name: new Date(item.date).toLocaleDateString('en-IN', { weekday: 'short' }),
-    active: item.count,
-  }));
+    return { totalUsers, activeUsers, totalAutomations, totalRevenue };
+  }, [users, automations, payments]);
+
+  const chartData = useMemo(() => {
+    // Simple derived chart from active users count over last 3 periods
+    const base = stats.activeUsers || 0;
+    return [
+      { name: "Mon", active: Math.round(base * 0.8) },
+      { name: "Tue", active: Math.round(base * 0.9) },
+      { name: "Wed", active: base },
+      { name: "Thu", active: Math.round(base * 1.05) },
+      { name: "Fri", active: Math.round(base * 1.1) },
+      { name: "Sat", active: Math.round(base * 0.95) },
+      { name: "Sun", active: Math.round(base * 0.9) },
+    ];
+  }, [stats.activeUsers]);
+
+  const activity = useMemo(() => {
+    // Generate activity from recent payments, automations, and user updates
+    const activities: Array<{ action: string; userId: string; createdAt: string }> = [];
+    
+    // Add payment activities
+    payments.slice(0, 5).forEach((payment) => {
+      activities.push({
+        action: `payment_${payment.status}`,
+        userId: payment.userId,
+        createdAt: payment.createdAt,
+      });
+    });
+
+    // Add automation activities
+    automations.slice(0, 3).forEach((automation) => {
+      activities.push({
+        action: automation.status ? "automation_activated" : "automation_deactivated",
+        userId: automation.userId,
+        createdAt: automation.updatedAt,
+      });
+    });
+
+    // Add user creation activities
+    users.slice(0, 3).forEach((user) => {
+      activities.push({
+        action: "user_created",
+        userId: user.id,
+        createdAt: user.createdAt,
+      });
+    });
+
+    // Sort by date (newest first)
+    return activities.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [payments, automations, users]);
 
   const formatRevenue = (amount: number) => {
     if (amount >= 100000) {

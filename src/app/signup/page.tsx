@@ -9,19 +9,85 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2, Check } from "lucide-react";
+import { createUser, setCurrentUser } from "@/lib/jsonStore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Signup() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    company: "",
+    password: "",
+  });
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your first and last name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.email.trim() || !formData.email.includes("@")) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.password || formData.password.length < 8) {
+      toast({
+        title: "Validation Error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      // Create new user
+      const newUser = createUser({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        companyName: formData.company || undefined,
+      });
+
+      // Set as current user
+      setCurrentUser(newUser);
+
+      toast({
+        title: "Account created successfully!",
+        description: "Welcome to Supr DM",
+      });
+
+      // Redirect to dashboard
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 500);
+    } catch (error: any) {
       setIsLoading(false);
-      router.push("/dashboard");
-    }, 1500);
+      toast({
+        title: "Signup Failed",
+        description: error.message || "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -93,28 +159,64 @@ export default function Signup() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" placeholder="Aditya" className="h-11" required />
+              <Input 
+                id="firstName" 
+                placeholder="Aditya" 
+                className="h-11" 
+                required 
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" placeholder="Kumar" className="h-11" required />
+              <Input 
+                id="lastName" 
+                placeholder="Kumar" 
+                className="h-11" 
+                required 
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Work Email</Label>
-            <Input id="email" type="email" placeholder="name@company.com" className="h-11" required />
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="name@company.com" 
+              className="h-11" 
+              required 
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="company">Company Name</Label>
-            <Input id="company" placeholder="Acme Inc." className="h-11" />
+            <Input 
+              id="company" 
+              placeholder="Acme Inc." 
+              className="h-11" 
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
-              <Input id="password" type={showPassword ? "text" : "password"} className="h-11 pr-10" placeholder="Must be at least 8 characters" required />
+              <Input 
+                id="password" 
+                type={showPassword ? "text" : "password"} 
+                className="h-11 pr-10" 
+                placeholder="Must be at least 8 characters" 
+                required 
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

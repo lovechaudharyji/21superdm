@@ -1,46 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Crown, Zap, Sparkles, Save, IndianRupee } from "lucide-react";
-import { mockPlans, mockFeatures } from "@/lib/mock-data";
+import { Crown, Zap, Sparkles, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Feature,
+  Plan,
+  STORE_KEYS,
+  getInitialFeatures,
+  getInitialPlans,
+  loadData,
+} from "@/lib/jsonStore";
 
 export default function PlansManagement() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [editingPlan, setEditingPlan] = useState<string | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [features, setFeatures] = useState<Feature[]>([]);
 
-  const { data: plans = mockPlans } = useQuery({
-    queryKey: ["/api/admin/plans"],
-    queryFn: async () => {
-      return mockPlans;
-    },
-  });
-
-  const { data: features = mockFeatures } = useQuery({
-    queryKey: ["/api/admin/features"],
-    queryFn: async () => {
-      return mockFeatures;
-    },
-  });
-
-  const updatePlanFeaturesMutation = useMutation({
-    mutationFn: async ({ planId, featureIds }: { planId: string; featureIds: string[] }) => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/plan-features-all"] });
-      setEditingPlan(null);
-      toast({ title: "Features updated", description: "Plan features have been updated." });
-    },
-  });
+  useEffect(() => {
+    setPlans(loadData(STORE_KEYS.plans, getInitialPlans()));
+    setFeatures(loadData(STORE_KEYS.features, getInitialFeatures()));
+  }, []);
 
   const getPlanIcon = (planId: string) => {
     switch (planId) {

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,22 +18,22 @@ import {
   Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { mockAutomations } from "@/lib/mock-data";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Automation,
+  STORE_KEYS,
+  getInitialAutomations,
+  loadData,
+  saveData,
+} from "@/lib/jsonStore";
 
 export default function EditAutomation() {
   const router = useRouter();
   const params = useParams();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const id = params.id as string;
-
-  const { data: automation } = useQuery({
-    queryKey: ["/api/automations", id],
-    queryFn: async () => {
-      // Mock - in real app, fetch from API
-      return mockAutomations.find(a => a.id === parseInt(id)) || mockAutomations[0];
-    },
-  });
+  const [automation, setAutomation] = useState<Automation | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -49,6 +48,18 @@ export default function EditAutomation() {
     followersOnly: false,
     status: true,
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const all = loadData<Automation[]>(
+      STORE_KEYS.automations,
+      getInitialAutomations()
+    );
+    // Only find automations belonging to current user
+    const found =
+      all.find((a) => a.id === parseInt(id, 10) && a.userId === user.id) ?? null;
+    setAutomation(found);
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (automation) {
@@ -67,36 +78,6 @@ export default function EditAutomation() {
       });
     }
   }, [automation]);
-
-  const updateMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/automations"] });
-      toast({
-        title: "Success",
-        description: "Automation updated successfully!",
-      });
-      router.push("/dashboard/automations");
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/automations"] });
-      toast({
-        title: "Deleted",
-        description: "Automation deleted successfully!",
-      });
-      router.push("/dashboard/automations");
-    },
-  });
 
   const handleAddKeyword = () => {
     if (formData.keywordInput.trim() && !formData.keywords.includes(formData.keywordInput.trim())) {
@@ -117,7 +98,24 @@ export default function EditAutomation() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate(formData);
+    if (!automation || !user?.id) return;
+
+    const all = loadData<Automation[]>(
+      STORE_KEYS.automations,
+      getInitialAutomations()
+    );
+    // Only update if automation belongs to current user
+    const updated = all.map((a) =>
+      a.id === automation.id && a.userId === user.id
+        ? { ...a, ...formData, keywords: formData.keywords, updatedAt: new Date().toISOString() }
+        : a
+    );
+    saveData(STORE_KEYS.automations, updated);
+    toast({
+      title: "Success",
+      description: "Automation updated successfully!",
+    });
+    router.push("/dashboard/automations");
   };
 
   if (!automation) {
@@ -147,8 +145,20 @@ export default function EditAutomation() {
           </div>
           <Button
             variant="destructive"
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
+            onClick={() => {
+              if (!automation) return;
+              const all = loadData<Automation[]>(
+                STORE_KEYS.automations,
+                getInitialAutomations()
+              );
+              const updated = all.filter((a) => a.id !== automation.id);
+              saveData(STORE_KEYS.automations, updated);
+              toast({
+                title: "Deleted",
+                description: "Automation deleted successfully!",
+              });
+              router.push("/dashboard/automations");
+            }}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             Delete
@@ -281,9 +291,9 @@ export default function EditAutomation() {
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
+            <Button type="submit">
               <Save className="h-4 w-4 mr-2" />
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+              Save Changes
             </Button>
           </div>
         </form>

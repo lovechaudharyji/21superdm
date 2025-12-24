@@ -9,7 +9,7 @@ import { CheckCircle2 } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="pt-32 pb-16 md:pt-48 md:pb-32 overflow-hidden bg-gradient-to-br from-background via-purple-50/50 to-white">
+    <section className="pt-32 pb-16 md:pt-48 md:pb-32 overflow-hidden bg-gradient-to-br from-background via-primary/5 to-white">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -44,8 +44,8 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-4">
               <ShimmerButton 
                 className="h-14 px-8 text-lg font-semibold shadow-lg"
-                shimmerColor="#ff5e86"
-                background="linear-gradient(135deg, #ff5e86 0%, #ff8fab 100%)"
+                shimmerColor="#FF4D7A"
+                background="linear-gradient(135deg, #FF4D7A 0%, #ff8fab 100%)"
                 onClick={() => window.location.href = "/api/login"}
               >
                 Start for Free
@@ -115,7 +115,7 @@ export default function Hero() {
             
             {/* Background Decor */}
             <div className="absolute -z-10 top-0 right-0 w-full h-full bg-gradient-to-tr from-accent/20 to-primary/20 rounded-full blur-3xl transform translate-x-12 -translate-y-12 opacity-60" />
-            <div className="absolute -z-10 bottom-0 left-0 w-3/4 h-3/4 bg-gradient-to-bl from-secondary/20 to-blue-200 rounded-full blur-3xl transform -translate-x-12 translate-y-12 opacity-60" />
+            <div className="absolute -z-10 bottom-0 left-0 w-3/4 h-3/4 bg-gradient-to-bl from-secondary/20 to-primary/10 rounded-full blur-3xl transform -translate-x-12 translate-y-12 opacity-60" />
           </motion.div>
         </div>
       </div>

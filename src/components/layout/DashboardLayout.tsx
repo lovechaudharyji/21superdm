@@ -61,8 +61,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { isAdmin, getAutomationLimit, getPlanId } = usePermissions();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   const limits = getAutomationLimit();
   const planId = getPlanId();
@@ -225,7 +230,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="gap-2 text-destructive cursor-pointer"
-                onClick={() => router.push('/login')}
+                onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
                 Log Out
@@ -301,7 +306,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="gap-2 text-destructive cursor-pointer"
-              onClick={() => router.push('/login')}
+              onClick={handleLogout}
               data-testid="button-logout"
             >
               <LogOut className="h-4 w-4" />

@@ -1,48 +1,53 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { mockFeatures } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Feature,
+  STORE_KEYS,
+  getInitialFeatures,
+  loadData,
+  saveData,
+} from "@/lib/jsonStore";
 
 export default function FeaturesManagement() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [features, setFeatures] = useState<Feature[]>([]);
 
-  const { data: features = mockFeatures } = useQuery({
-    queryKey: ["/api/admin/features"],
-    queryFn: async () => {
-      return mockFeatures;
-    },
-  });
+  useEffect(() => {
+    const loaded = loadData<Feature[]>(
+      STORE_KEYS.features,
+      getInitialFeatures()
+    );
+    setFeatures(loaded);
+  }, []);
 
-  const updateFeatureMutation = useMutation({
-    mutationFn: async (feature: { id: string; isActive?: boolean; isComingSoon?: boolean }) => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/features"] });
-      toast({ title: "Feature updated", description: "Feature settings have been updated." });
-    },
-  });
-
-  const toggleActive = (feature: typeof mockFeatures[0]) => {
-    updateFeatureMutation.mutate({
-      id: feature.id,
-      isActive: !feature.isActive,
+  const updateFeatures = (next: Feature[]) => {
+    setFeatures(next);
+    saveData(STORE_KEYS.features, next);
+    toast({
+      title: "Feature updated",
+      description: "Feature settings have been updated.",
     });
   };
 
-  const toggleComingSoon = (feature: typeof mockFeatures[0]) => {
-    updateFeatureMutation.mutate({
-      id: feature.id,
-      isComingSoon: !feature.isComingSoon,
-    });
+  const toggleActive = (feature: Feature) => {
+    const next = features.map((f) =>
+      f.id === feature.id ? { ...f, isActive: !f.isActive } : f
+    );
+    updateFeatures(next);
+  };
+
+  const toggleComingSoon = (feature: Feature) => {
+    const next = features.map((f) =>
+      f.id === feature.id ? { ...f, isComingSoon: !f.isComingSoon } : f
+    );
+    updateFeatures(next);
   };
 
   const groupedFeatures = features.reduce((acc, feature) => {
@@ -50,7 +55,7 @@ export default function FeaturesManagement() {
     if (!acc[category]) acc[category] = [];
     acc[category].push(feature);
     return acc;
-  }, {} as Record<string, typeof mockFeatures>);
+  }, {} as Record<string, Feature[]>);
 
   return (
     <AdminLayout>

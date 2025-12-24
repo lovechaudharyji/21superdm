@@ -9,19 +9,67 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { validateCredentials, setCurrentUser } from "@/lib/jsonStore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.email.trim() || !formData.password.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      // Validate credentials
+      const user = validateCredentials(formData.email, formData.password);
+
+      if (!user) {
+        setIsLoading(false);
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Set as current user
+      setCurrentUser(user);
+
+      toast({
+        title: "Welcome back!",
+        description: `Logged in as ${user.firstName} ${user.lastName}`,
+      });
+
+      // Redirect to dashboard
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 500);
+    } catch (error: any) {
       setIsLoading(false);
-      router.push("/dashboard");
-    }, 1500);
+      toast({
+        title: "Login Failed",
+        description: error.message || "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -39,7 +87,15 @@ export default function Login() {
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="email">Email Address</Label>
-            <Input id="email" type="email" placeholder="name@company.com" className="h-12 rounded-lg" required />
+            <Input 
+              id="email" 
+              type="email" 
+              placeholder="name@company.com" 
+              className="h-12 rounded-lg" 
+              required 
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
           </div>
 
           <div className="space-y-2">
@@ -48,7 +104,14 @@ export default function Login() {
               <a href="#" className="text-sm font-medium text-primary hover:underline">Forgot password?</a>
             </div>
             <div className="relative">
-              <Input id="password" type={showPassword ? "text" : "password"} className="h-12 rounded-lg pr-10" required />
+              <Input 
+                id="password" 
+                type={showPassword ? "text" : "password"} 
+                className="h-12 rounded-lg pr-10" 
+                required 
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

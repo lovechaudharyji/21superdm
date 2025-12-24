@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   CreditCard, 
@@ -22,7 +21,17 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { mockPlans } from "@/lib/mock-data";
+import {
+  Plan,
+  Payment,
+  STORE_KEYS,
+  User,
+  getInitialPayments,
+  getInitialPlans,
+  getInitialUsers,
+  loadData,
+  saveData,
+} from "@/lib/jsonStore";
 
 declare global {
   interface Window {
@@ -45,17 +54,16 @@ const planColors: Record<string, string> = {
 export default function Billing() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
 
-  const { data: plans = mockPlans, isLoading: plansLoading } = useQuery({
-    queryKey: ["/api/plans"],
-    queryFn: async () => {
-      const res = await fetch("/api/plans");
-      return res.json();
-    },
-  });
+  useEffect(() => {
+    const loaded = loadData<Plan[]>(STORE_KEYS.plans, getInitialPlans());
+    setPlans(loaded);
+    setPlansLoading(false);
+  }, []);
 
   const formatPrice = (paise: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -65,17 +73,76 @@ export default function Billing() {
     }).format(paise / 100);
   };
 
-  const getYearlySavings = (plan: typeof mockPlans[0]) => {
+  const getYearlySavings = (plan: Plan) => {
     const monthlyTotal = plan.priceMonthly * 12;
     const savings = monthlyTotal - plan.priceYearly;
     return savings > 0 ? Math.round((savings / monthlyTotal) * 100) : 0;
   };
 
   const handleUpgrade = async (planId: string) => {
-    toast({
-      title: "Payment Integration",
-      description: "Payment processing will be available in production.",
-    });
+    if (!user) {
+      toast({
+        title: "No user",
+        description: "You must be logged in to change plans.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedPlan = plans.find((p) => p.id === planId);
+    if (!selectedPlan) return;
+
+    setProcessingPlan(planId);
+
+    try {
+      const allUsers = loadData<User[]>(STORE_KEYS.users, getInitialUsers());
+      const updatedUsers = allUsers.map((u) =>
+        u.id === user.id ? { ...u, planId: planId } : u
+      );
+      saveData(STORE_KEYS.users, updatedUsers);
+
+      const currentUser = updatedUsers.find((u) => u.id === user.id) ?? user;
+      saveData(STORE_KEYS.currentUser, currentUser);
+
+      const payments = loadData<Payment[]>(
+        STORE_KEYS.payments,
+        getInitialPayments()
+      );
+      const nextId =
+        payments.reduce((max, p) => (p.id > max ? p.id : max), 0) + 1;
+      const amount =
+        billingCycle === "yearly"
+          ? selectedPlan.priceYearly
+          : selectedPlan.priceMonthly;
+
+      const newPayment: Payment = {
+        id: nextId,
+        userId: user.id,
+        razorpayOrderId: `local_order_${nextId}`,
+        razorpayPaymentId: `local_payment_${nextId}`,
+        razorpaySignature: null,
+        amount,
+        currency: "INR",
+        status: "paid",
+        planId: selectedPlan.id,
+        billingCycle,
+        receipt: `local_receipt_${nextId}`,
+        notes: null,
+        failureReason: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedPayments = [...payments, newPayment];
+      saveData(STORE_KEYS.payments, updatedPayments);
+
+      toast({
+        title: "Plan updated",
+        description: `You are now on the ${selectedPlan.name} plan (local only).`,
+      });
+    } finally {
+      setProcessingPlan(null);
+    }
   };
 
   if (plansLoading) {

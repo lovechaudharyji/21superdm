@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +22,19 @@ import {
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Automation,
+  STORE_KEYS,
+  getInitialAutomations,
+  loadData,
+  saveData,
+} from "@/lib/jsonStore";
 
 export default function AutomationBuilder() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { canCreateAutomation } = usePermissions();
 
   const [formData, setFormData] = useState({
@@ -42,33 +49,6 @@ export default function AutomationBuilder() {
     sendPublicReply: false,
     followersOnly: false,
     status: true,
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      const res = await fetch("/api/automations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to create automation");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/automations"] });
-      toast({
-        title: "Success",
-        description: "Automation created successfully!",
-      });
-      router.push("/dashboard/automations");
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create automation",
-        variant: "destructive",
-      });
-    },
   });
 
   const handleAddKeyword = () => {
@@ -90,6 +70,14 @@ export default function AutomationBuilder() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "Please log in to create automations.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!canCreateAutomation()) {
       toast({
         title: "Limit Reached",
@@ -98,7 +86,42 @@ export default function AutomationBuilder() {
       });
       return;
     }
-    createMutation.mutate(formData);
+
+    const all = loadData<Automation[]>(
+      STORE_KEYS.automations,
+      getInitialAutomations()
+    );
+    const maxId = all.reduce((max, a) => (a.id > max ? a.id : max), 0);
+    const newAutomation: Automation = {
+      id: maxId + 1,
+      userId: user.id,
+      name: formData.name,
+      category: formData.category as Automation["category"],
+      status: formData.status,
+      triggerType: formData.triggerType as Automation["triggerType"],
+      keywords: formData.keywords,
+      replyOnShare: formData.replyOnShare,
+      sendPublicReply: formData.sendPublicReply,
+      followersOnly: formData.followersOnly,
+      messageType: formData.messageType as Automation["messageType"],
+      messageContent: formData.messageContent,
+      runs: 0,
+      dmsSent: 0,
+      dmsSeen: 0,
+      engaged: 0,
+      clicks: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updated = [...all, newAutomation];
+    saveData(STORE_KEYS.automations, updated);
+
+    toast({
+      title: "Success",
+      description: "Automation created successfully! (local only)",
+    });
+    router.push("/dashboard/automations");
   };
 
   if (!canCreateAutomation()) {
@@ -289,9 +312,9 @@ export default function AutomationBuilder() {
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button type="submit">
               <Save className="h-4 w-4 mr-2" />
-              {createMutation.isPending ? "Creating..." : "Create Automation"}
+              Create Automation
             </Button>
           </div>
         </form>

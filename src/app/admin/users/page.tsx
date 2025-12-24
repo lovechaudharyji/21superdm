@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,68 +33,60 @@ import {
   Sparkles,
   Eye,
 } from "lucide-react";
-import { mockUsers, mockPlans, mockRoles } from "@/lib/mock-data";
+import {
+  Plan,
+  Role,
+  STORE_KEYS,
+  User,
+  getInitialPlans,
+  getInitialRoles,
+  getInitialUsers,
+  loadData,
+  saveData,
+} from "@/lib/jsonStore";
 import { useToast } from "@/hooks/use-toast";
 
 export default function UserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [users, setUsers] = useState<User[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
 
-  const { data: users = mockUsers } = useQuery({
-    queryKey: ["/api/admin/users"],
-    queryFn: async () => {
-      return mockUsers;
-    },
-  });
+  useEffect(() => {
+    setUsers(loadData<User[]>(STORE_KEYS.users, getInitialUsers()));
+    setPlans(loadData<Plan[]>(STORE_KEYS.plans, getInitialPlans()));
+    setRoles(loadData<Role[]>(STORE_KEYS.roles, getInitialRoles()));
+  }, []);
 
-  const { data: plans = mockPlans } = useQuery({
-    queryKey: ["/api/plans"],
-    queryFn: async () => {
-      const res = await fetch("/api/plans");
-      return res.json();
-    },
-  });
+  const saveUsers = (next: User[], message?: string) => {
+    setUsers(next);
+    saveData(STORE_KEYS.users, next);
+    if (message) {
+      toast({ title: message });
+    }
+  };
 
-  const { data: roles = mockRoles } = useQuery({
-    queryKey: ["/api/roles"],
-    queryFn: async () => {
-      return mockRoles;
-    },
-  });
+  const handleStatusChange = (userId: string, status: string) => {
+    const updated = users.map((u) =>
+      u.id === userId ? { ...u, status } : u
+    );
+    saveUsers(updated, "User status has been updated.");
+  };
 
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: "Role updated", description: "User role has been updated." });
-    },
-  });
+  const handleRoleChange = (userId: string, roleId: string) => {
+    const updated = users.map((u) =>
+      u.id === userId ? { ...u, roleId } : u
+    );
+    saveUsers(updated, "User role has been updated.");
+  };
 
-  const updatePlanMutation = useMutation({
-    mutationFn: async ({ userId, planId }: { userId: string; planId: string }) => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: "Plan updated", description: "User plan has been updated." });
-    },
-  });
-
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ userId, status }: { userId: string; status: string }) => {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: "Status updated", description: "User status has been updated." });
-    },
-  });
+  const handlePlanChange = (userId: string, planId: string) => {
+    const updated = users.map((u) =>
+      u.id === userId ? { ...u, planId } : u
+    );
+    saveUsers(updated, "User plan has been updated.");
+  };
 
   const filteredUsers = users.filter(user => 
     (user.firstName?.toLowerCase() ?? '').includes(searchTerm.toLowerCase()) || 
@@ -220,24 +211,37 @@ export default function UserManagement() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Shield className="mr-2 h-4 w-4" /> Change Role
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Crown className="mr-2 h-4 w-4" /> Change Plan
-                          </DropdownMenuItem>
+                          <DropdownMenuLabel>Role</DropdownMenuLabel>
+                          {roles.map((role) => (
+                            <DropdownMenuItem
+                              key={role.id}
+                              onClick={() => handleRoleChange(user.id, role.id)}
+                            >
+                              <Shield className="mr-2 h-4 w-4" /> {role.name}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel>Plan</DropdownMenuLabel>
+                          {plans.map((plan) => (
+                            <DropdownMenuItem
+                              key={plan.id}
+                              onClick={() => handlePlanChange(user.id, plan.id)}
+                            >
+                              <Crown className="mr-2 h-4 w-4" /> {plan.name}
+                            </DropdownMenuItem>
+                          ))}
                           <DropdownMenuSeparator />
                           {user.status === 'active' ? (
                             <DropdownMenuItem 
                               className="text-red-600"
-                              onClick={() => updateStatusMutation.mutate({ userId: user.id, status: 'suspended' })}
+                              onClick={() => handleStatusChange(user.id, 'suspended')}
                             >
                               <Ban className="mr-2 h-4 w-4" /> Suspend User
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem 
                               className="text-green-600"
-                              onClick={() => updateStatusMutation.mutate({ userId: user.id, status: 'active' })}
+                              onClick={() => handleStatusChange(user.id, 'active')}
                             >
                               <CheckCircle className="mr-2 h-4 w-4" /> Activate User
                             </DropdownMenuItem>

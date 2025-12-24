@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { mockUser } from "@/lib/mock-data";
+import { loadData, STORE_KEYS, getInitialCurrentUser } from "@/lib/jsonStore";
 
 export async function GET() {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
-  return NextResponse.json(mockUser);
+  const currentUser = loadData(STORE_KEYS.currentUser, getInitialCurrentUser());
+  return NextResponse.json(currentUser);
 }
 

@@ -1,59 +1,107 @@
 "use client";
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, Users, IndianRupee, MessageCircle } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import {
+  Payment,
+  Plan,
+  STORE_KEYS,
+  User,
+  getInitialPayments,
+  getInitialPlans,
+  getInitialUsers,
+  loadData,
+} from "@/lib/jsonStore";
 
 const COLORS = ['#ff5e86', '#8b5cf6', '#10b981', '#f59e0b', '#3b82f6'];
 
 export default function Analytics() {
   const [days, setDays] = useState("30");
+  const [users, setUsers] = useState<User[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
-  const { data: userGrowth = [] } = useQuery({
-    queryKey: [`/api/admin/analytics/user-growth?days=${days}`],
-    queryFn: async () => {
-      // Mock data
-      return Array.from({ length: 30 }, (_, i) => ({
-        date: new Date(Date.now() - (29 - i) * 86400000).toISOString(),
-        newUsers: Math.floor(Math.random() * 20) + 5,
-        totalUsers: 1000 + i * 10,
-      }));
-    },
-  });
+  useEffect(() => {
+    setUsers(loadData<User[]>(STORE_KEYS.users, getInitialUsers()));
+    setPlans(loadData<Plan[]>(STORE_KEYS.plans, getInitialPlans()));
+    setPayments(
+      loadData<Payment[]>(STORE_KEYS.payments, getInitialPayments())
+    );
+  }, []);
 
-  const { data: planDistribution = [] } = useQuery({
-    queryKey: ["/api/admin/analytics/plan-distribution"],
-    queryFn: async () => {
-      // Mock data
-      return [
-        { planId: 'starter', planName: 'Starter', count: 450, percentage: 36 },
-        { planId: 'growth', planName: 'Growth', count: 600, percentage: 48 },
-        { planId: 'scale', planName: 'Scale', count: 200, percentage: 16 },
-      ];
-    },
-  });
-
-  const { data: paymentData } = useQuery({
-    queryKey: [`/api/admin/analytics/payments?days=${days}`],
-    queryFn: async () => {
-      // Mock data
+  const userGrowth = useMemo(() => {
+    const total = users.length;
+    const base = Math.max(total, 1);
+    return Array.from({ length: 30 }, (_, i) => {
+      const factor = 0.7 + (i / 29) * 0.6;
+      const totalUsers = Math.round(base * factor);
+      const prev =
+        i === 0
+          ? Math.round(base * 0.7)
+          : Math.round(base * (0.7 + ((i - 1) / 29) * 0.6));
+      const newUsers = Math.max(totalUsers - prev, 0);
       return {
-        totalRevenue: 245000,
-        successfulPayments: 180,
-        failedPayments: 12,
-        dailyRevenue: Array.from({ length: 30 }, (_, i) => ({
-          date: new Date(Date.now() - (29 - i) * 86400000).toISOString(),
-          amount: Math.floor(Math.random() * 50000) + 10000,
-          count: Math.floor(Math.random() * 10) + 3,
-        })),
+        date: new Date(Date.now() - (29 - i) * 86400000).toISOString(),
+        newUsers,
+        totalUsers,
       };
-    },
-  });
+    });
+  }, [users, days]);
+
+  const planDistribution = useMemo(() => {
+    if (users.length === 0 || plans.length === 0) return [];
+    const counts: Record<string, number> = {};
+    users.forEach((u) => {
+      counts[u.planId] = (counts[u.planId] || 0) + 1;
+    });
+    const total = users.length || 1;
+    return plans.map((plan) => ({
+      planId: plan.id,
+      planName: plan.name,
+      count: counts[plan.id] || 0,
+      percentage: Math.round(((counts[plan.id] || 0) / total) * 100),
+    }));
+  }, [users, plans]);
+
+  const paymentData = useMemo(() => {
+    if (payments.length === 0) return null;
+    const successful = payments.filter((p) => p.status === "paid");
+    const failed = payments.filter((p) => p.status === "failed");
+    const totalRevenue = successful.reduce((sum, p) => sum + p.amount, 0);
+
+    const windowMs =
+      parseInt(days, 10) * 24 * 60 * 60 * 1000 || 30 * 24 * 60 * 60 * 1000;
+    const startTime = Date.now() - windowMs;
+
+    const dailyMap: Record<string, { date: string; amount: number; count: number }> = {};
+
+    successful.forEach((p) => {
+      const dateObj = new Date(p.createdAt);
+      if (dateObj.getTime() < startTime) return;
+      const key = dateObj.toISOString().slice(0, 10);
+      if (!dailyMap[key]) {
+        dailyMap[key] = { date: key, amount: 0, count: 0 };
+      }
+      dailyMap[key].amount += p.amount;
+      dailyMap[key].count += 1;
+    });
+
+    const dailyRevenue = Object.values(dailyMap).sort(
+      (a, b) => a.date.localeCompare(b.date)
+    );
+
+    return {
+      totalRevenue,
+      successfulPayments: successful.length,
+      failedPayments: failed.length,
+      dailyRevenue,
+    };
+  }, [payments, days]);
 
   return (
     <AdminLayout>

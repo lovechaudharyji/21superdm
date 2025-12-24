@@ -9,11 +9,11 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-24 bg-slate-50">
+    <section id="pricing" className="py-24 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">Simple, Indian Pricing 🇮🇳</h2>
-          <p className="text-xl text-muted-foreground">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-gray-900">Simple, Indian Pricing 🇮🇳</h2>
+          <p className="text-xl text-gray-600">
             Pay in Rupees. No international transaction fees. No hidden charges.
           </p>
         </div>
@@ -44,7 +44,7 @@ export default function Pricing() {
                   <span>Basic Facebook Messenger</span>
                 </li>
                 <li className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-slate-300" />
+                  <Check className="h-4 w-4 text-muted-foreground" />
                   <span>WhatsApp API (Add-on)</span>
                 </li>
               </ul>
@@ -56,13 +56,13 @@ export default function Pricing() {
 
           {/* Pro Plan - Featured */}
           <MagicCard 
-            className="border-2 border-primary shadow-xl relative scale-105 bg-white rounded-xl overflow-hidden"
-            gradientColor="#ff5e86"
-            gradientFrom="#ff5e86"
+            className="border-2 border-primary shadow-xl relative scale-105 bg-card rounded-xl overflow-hidden"
+            gradientColor="#FF4D7A"
+            gradientFrom="#FF4D7A"
             gradientTo="#ff8fab"
             gradientOpacity={0.15}
           >
-            <BorderBeam size={250} duration={12} delay={0} colorFrom="#ff5e86" colorTo="#ff8fab" />
+            <BorderBeam size={250} duration={12} delay={0} colorFrom="#FF4D7A" colorTo="#ff8fab" />
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-bold shadow-sm z-10">
               Most Popular
             </div>
@@ -98,7 +98,7 @@ export default function Pricing() {
               <ShimmerButton 
                 className="w-full h-12 text-lg font-semibold"
                 shimmerColor="#ffffff"
-                background="linear-gradient(135deg, #ff5e86 0%, #ff8fab 100%)"
+                background="linear-gradient(135deg, #FF4D7A 0%, #ff8fab 100%)"
               >
                 Get Started
               </ShimmerButton>
