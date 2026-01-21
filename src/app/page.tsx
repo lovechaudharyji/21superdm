@@ -74,7 +74,7 @@ import LinkDMSection from "@/components/sections/LinkDMvSection";
 import Brand from "@/components/sections/Brand";
 import Niches from "@/components/sections/Niches";
 import Badges from "@/components/sections/Badges";
-import Feature from "@/components/sections/Feature";
+import FeatureBreak from "@/components/sections/FeatureBreak";
 import SocialProof from "@/components/sections/SocialProof";
 import SuperdmReferral from "@/components/sections/SuperdmReferral";
 import SuperdmPartner from "@/components/sections/SuperdmPartner";
@@ -113,7 +113,7 @@ export default function Home() {
 
         <Features />
         <Badges />
-        <Feature />
+        <FeatureBreak />
         <SocialProof />
         <SuperdmReferral />
         <SuperdmPartner />

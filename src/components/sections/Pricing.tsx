@@ -9,7 +9,7 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-24 bg-white">
+    <section id="pricing" className="py-24 ">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 text-gray-900">Simple, Indian Pricing 🇮🇳</h2>

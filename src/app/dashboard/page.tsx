@@ -521,11 +521,11 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {performanceData.map((item, index) => (
-            <Card key={index} className="border-[#e7e7e7] cursor-pointer hover:bg-[#1a1a1a] transition-colors" onClick={handleOpenEditStats}>
+            <Card key={index} className="border-[#e7e7e7] cursor-pointer transition-colors" onClick={handleOpenEditStats}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className={`p-2 rounded-lg ${item.color}`}>
-                    <item.icon className="h-5 w-5 text-white" />
+                    <item.icon className="h-5 w-5 text-Dark" />
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge 
@@ -538,7 +538,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="mt-3">
-                  <p className="text-2xl font-semibold text-white">{item.value}</p>
+                  <p className="text-2xl font-semibold text-Dark">{item.value}</p>
                   <p className="text-sm text-[#8b8b8b] mt-0.5">{item.label}</p>
                 </div>
               </CardContent>
@@ -550,7 +550,7 @@ export default function Dashboard() {
           <Card className="border-[#e7e7e7]">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-medium text-white flex items-center justify-between">
-                <span>Social Accounts</span>
+                <span className="text-dark font-bold">Social Accounts</span>
                 <div className="flex gap-1">
                   <Dialog open={addAccountOpen} onOpenChange={setAddAccountOpen}>
                     <DialogTrigger asChild>
@@ -701,7 +701,7 @@ export default function Dashboard() {
 
           <Card className="lg:col-span-2 border-[#e7e7e7]">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium text-white">Audience Online Activity</CardTitle>
+              <CardTitle className=" font-Bold text-dark">Audience Online Activity</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
@@ -749,7 +749,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2 border-[#e7e7e7]">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-medium text-white">
+              <CardTitle className=" font-bold text-dark">
                 Growth and Development
               </CardTitle>
               <Button
@@ -809,7 +809,7 @@ export default function Dashboard() {
 
           <Card className="border-[#e7e7e7]">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium text-white">
+              <CardTitle className="  font-bold text-black">
                 Geo Distribution
               </CardTitle>
             </CardHeader>
@@ -818,8 +818,8 @@ export default function Dashboard() {
                 {geoData.map((item, index) => (
                   <div key={index} className="space-y-1.5">
                     <div className="flex justify-between text-sm">
-                      <span className="text-white">{item.country}</span>
-                      <span className="font-medium text-white">{item.percentage}%</span>
+                      <span className="text-black">{item.country}</span>
+                      <span className="font-medium text-black">{item.percentage}%</span>
                     </div>
                     <div className="h-2 bg-[#f0f0f0] rounded-full overflow-hidden">
                       <div 

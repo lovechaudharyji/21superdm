@@ -15,10 +15,10 @@ export default function SuperdmPartner() {
           {/* Top Section */}
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6">
-              LinkDM Partner Program
+              Supr DM Partner Program
             </h2>
             <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Let your users access LinkDM Pro at no cost to them. Our partner program is designed for brands and affiliate platforms looking to boost user success with automated Instagram DMs—without any tech headaches.
+              Let your users access Supr DM Pro at no cost to them. Our partner program is designed for brands and affiliate platforms looking to boost user success with automated Instagram DMs—without any tech headaches.
             </p>
           </div>
 

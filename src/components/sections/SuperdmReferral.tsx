@@ -15,13 +15,13 @@ export default function SuperdmReferral() {
           {/* Top Section */}
           <div className="text-center mb-12">
             <p className="text-sm md:text-base font-bold text-primary uppercase tracking-wider mb-2">
-              EARN WITH LINKDM
+              EARN WITH Supr DM
             </p>
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-6">
-              LinkDM Referral Program
+              Supr DM Referral Program
             </h2>
             <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Refer your friends to LinkDM and earn 30% of the total revenue they spend on a paid subscription during their first year. It's our way of rewarding our most engaged users for helping to grow the community and share the value of our platform.
+              Refer your friends to Supr DM and earn 30% of the total revenue they spend on a paid subscription during their first year. It's our way of rewarding our most engaged users for helping to grow the community and share the value of our platform.
             </p>
           </div>
 
@@ -46,7 +46,7 @@ export default function SuperdmReferral() {
                 >
                   <input
                     type="text"
-                    value="https://linkdm.com?via=@username"
+                    value="https://suprdm.com?via=@username"
                     readOnly
                     className="flex-1 bg-transparent text-sm font-mono outline-none"
                     style={{ color: "hsl(var(--primary))" }}
@@ -149,7 +149,7 @@ export default function SuperdmReferral() {
                   Exclusive Access
                 </h3>
                 <p className="text-gray-700">
-                  This program is available to LinkDM Pro users
+                  This program is available to Supr DM Pro users
                 </p>
               </div>
 

@@ -4,24 +4,24 @@ import { useState } from "react";
 
 const faqs = [
   {
-    question: "What is LinkDM?",
+    question: "What is Supr DM?",
     answer:
       "LinkDM is an automation platform that helps businesses manage and scale their Instagram and Facebook direct message conversations efficiently.",
   },
   {
-    question: "Is LinkDM free to use?",
+    question: "Is Supr DM free to use?",
     answer:
-      "Yes, LinkDM offers a free plan with essential features. Paid plans are available for advanced automation and scaling needs.",
+      "Yes, Supr DM offers a free plan with essential features. Paid plans are available for advanced automation and scaling needs.",
   },
   {
-    question: "Why is LinkDM free? What’s the catch?",
+    question: "Why is Supr DM free? What’s the catch?",
     answer:
       "There is no catch. Our free plan helps users get started, while premium plans support advanced use cases and business growth.",
   },
   {
-    question: "Is LinkDM safe to use?",
+    question: "Is Supr DM safe to use?",
     answer:
-      "Absolutely. LinkDM is a certified Meta Business Partner and follows strict compliance and security standards.",
+      "Absolutely. Supr DM is a certified Meta Business Partner and follows strict compliance and security standards.",
   },
 ];
 
@@ -29,12 +29,12 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="py-24 bg-white">
+    <section className="py-24">
       <div className="container mx-auto px-4 max-w-4xl">
 
         {/* Header */}
         <div className="text-center mb-16">
-          <p className="text-sm font-bold tracking-widest text-blue-600 uppercase mb-4">
+          <p className="text-sm font-bold tracking-widest text-primary uppercase mb-4">
             NEED ANSWERS?
           </p>
 

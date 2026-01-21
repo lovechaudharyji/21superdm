@@ -116,8 +116,8 @@ export default function AutomationsList() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Automations</p>
-                <p className="text-2xl font-bold">
-                  <NumberTicker value={automations.length} />
+                <p className="text-2xl font-bold text-dark">
+                  <NumberTicker className="text-dark" value={automations.length} />
                 </p>
               </div>
               <Zap className="h-8 w-8 text-primary" />
@@ -128,7 +128,7 @@ export default function AutomationsList() {
               <div>
                 <p className="text-sm text-muted-foreground">Active</p>
                 <p className="text-2xl font-bold">
-                  <NumberTicker value={automations.filter((a) => a.status).length} />
+                  <NumberTicker className="text-dark" value={automations.filter((a) => a.status).length} />
                 </p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-500" />
@@ -139,7 +139,7 @@ export default function AutomationsList() {
               <div>
                 <p className="text-sm text-muted-foreground">DMs Sent</p>
                 <p className="text-2xl font-bold">
-                  <NumberTicker value={automations.reduce((sum: number, a) => sum + a.dmsSent, 0)} />
+                  <NumberTicker className="text-dark" value={automations.reduce((sum: number, a) => sum + a.dmsSent, 0)} />
                 </p>
               </div>
               <Instagram className="h-8 w-8 text-pink-500" />
@@ -150,7 +150,7 @@ export default function AutomationsList() {
               <div>
                 <p className="text-sm text-muted-foreground">Engagement</p>
                 <p className="text-2xl font-bold">
-                  <NumberTicker value={automations.reduce((sum: number, a) => sum + a.engaged, 0)} />
+                  <NumberTicker className="text-dark" value={automations.reduce((sum: number, a) => sum + a.engaged, 0)} />
                 </p>
               </div>
               <Users className="h-8 w-8 text-blue-500" />
